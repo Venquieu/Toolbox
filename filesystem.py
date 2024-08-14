@@ -17,17 +17,15 @@ def make_dataset(root: str, ext: str = None, followlinks: bool = False):
     return file_list
 
 
-def sync_rm(root: str, source: str, target: str, strict: bool = False):
+def sync_rm(source_dir: str, target_dir: str, strict: bool = False):
     """
     Remove files under target dir if without corresponding files under source dir.
 
     Args:
-        root(str): root directory
-        soruce(str): source folder under root.
+        soruce_dir(str): source ffile directory as benchmark.
+        target_dir(str): target file directory to be checked.
         strict(bool): True means files must match includes extention name.
     """
-    source_dir = os.path.join(root, source)
-    target_dir = os.path.join(root, target)
     assert os.path.exists(source_dir) and os.path.exists(target_dir)
 
     target_list = make_dataset(target_dir)
@@ -41,3 +39,14 @@ def sync_rm(root: str, source: str, target: str, strict: bool = False):
 
         if len(found_list) == 0:
             os.remove(target_file)
+
+
+def read_text_file(path: str):
+    with open(path, "r") as f:
+        lines = f.readlines()
+    return [line.strip() for line in lines]
+
+
+def write_text_file(path: str, lines: list):
+    with open(path, "w") as f:
+        f.write("\n".join(lines))
