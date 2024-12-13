@@ -42,11 +42,11 @@ def sync_rm(source_dir: str, target_dir: str, strict: bool = False):
 
 
 def read_text_file(path: str):
-    with open(path, "r") as f:
+    with open(path, "r", encoding="utf-8") as f:
         lines = f.readlines()
     return [line.strip() for line in lines]
 
 
-def write_text_file(path: str, lines: list):
-    with open(path, "w") as f:
-        f.write("\n".join(lines))
+def write_text_file(path: str, lines: list, mode: str = "w"):
+    with open(path, mode=mode, encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")

@@ -1,0 +1,5 @@
+xmltodict
+opencv-python-headless
+numpy
+pandas
+matplotlib
