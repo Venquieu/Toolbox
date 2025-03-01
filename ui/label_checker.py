@@ -10,15 +10,17 @@ import numpy as np
 
 
 class LabelCheckerApp:
-    def __init__(self, root):
+    def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("Label Checker")
         self.data = []
         self.current_idx = -1
         self.file_path = ""
         self.vis_dir = ""
+        self.left_ratio = 0.75
+        self.font = ("微软雅黑", 12)
 
-        # UI布局
+        # UI layout
         self.create_menu()
         self.create_widgets()
         self.bind_shortcuts()
@@ -40,12 +42,25 @@ class LabelCheckerApp:
         self.img_frame.bind("<Configure>", self.on_frame_resize)
 
         # 右侧控制面板
-        control_frame = ttk.Frame(self.root, width=300)
+        control_frame = ttk.Frame(self.root)
         control_frame.pack(side=RIGHT, fill=Y)
 
-        # 标签编辑（改为ScrolledText）
+        # 新增Caption显示区域
+        self.caption_frame = ttk.Frame(control_frame)
+        self.caption_frame.pack(fill=X, pady=5, padx=5)
+
+        self.caption_label = scrolledtext.ScrolledText(
+            self.caption_frame,
+            wrap=tk.WORD,
+            height=3,
+            font=self.font,
+            state="disabled",
+        )
+        self.caption_label.pack(fill=BOTH, expand=True)
+
+        # 标签编辑区域
         self.text_area = scrolledtext.ScrolledText(
-            control_frame, wrap=tk.WORD, height=1, font=("微软雅黑", 10)
+            control_frame, wrap=tk.WORD, height=3, font=self.font
         )
         self.text_area.pack(pady=10, padx=5, fill=BOTH, expand=True)
 
@@ -92,7 +107,6 @@ class LabelCheckerApp:
         self.pos_label.pack(fill=X)
 
     def bind_shortcuts(self):
-        # 修改后的快捷键绑定
         self.root.bind("<Control-Left>", self.on_prev_shortcut)
         self.root.bind("<Control-Right>", self.on_next_shortcut)
         self.root.bind("<Delete>", self.on_delete_shortcut)
@@ -152,6 +166,17 @@ class LabelCheckerApp:
         except Exception as e:
             messagebox.showerror("错误", str(e))
 
+    def update_caption_display(self, text: str):
+        self.caption_label.config(state="normal")
+        self.caption_label.delete(1.0, END)
+        self.caption_label.insert(END, text)
+        self.caption_label.config(state="disabled")
+
+        # adjust caption height to fit caption text
+        line_count = text.count("\n") + 1
+        line_count = max(10, min(20, line_count))  # limit : 10-20 lines
+        self.caption_label.config(height=line_count)
+
     def process_image(self, url, caption, line_num):
         try:
             response = requests.get(url, stream=True)
@@ -160,9 +185,8 @@ class LabelCheckerApp:
 
             img = Image.open(BytesIO(response.content))
             img_cv = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
-            cv2.putText(
-                img_cv, caption, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2
-            )
+
+            # cv2.putText(img_cv, caption, (10,30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
 
             filename = f"{line_num}_{os.path.basename(url.split('?')[0])}"
             save_path = os.path.join(self.vis_dir, filename)
@@ -179,15 +203,19 @@ class LabelCheckerApp:
 
         item = self.data[self.current_idx]
 
-        # 更新文本区域
+        # 更新Caption显示
+        self.update_caption_display(item["caption"])
+
+        # 更新Label编辑区域
         self.text_area.delete(1.0, tk.END)
         self.text_area.insert(tk.END, item["label"])
 
         # 显示图像
         if item["img_path"] and os.path.exists(item["img_path"]):
             try:
-                frame_width = self.img_frame.winfo_width()
+                frame_width = round(self.root.winfo_width() * self.left_ratio)
                 frame_height = self.img_frame.winfo_height()
+                # print(f"frame_width={frame_width}, frame_height={frame_height}")
 
                 if frame_width <= 0 or frame_height <= 0:
                     return
@@ -264,5 +292,5 @@ class LabelCheckerApp:
 if __name__ == "__main__":
     root = tk.Tk()
     app = LabelCheckerApp(root)
-    root.geometry("1200x1200")
+    root.geometry("1200x800")
     root.mainloop()
